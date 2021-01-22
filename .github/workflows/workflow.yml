@@ -1,0 +1,113 @@
+name: push-frontend
+
+on:
+  push:
+    branches: 
+      - 'master'
+      - 'features/**'
+      - 'releases/**'
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Check existence file.yaml 
+      id: check_file
+      uses: andstor/file-existence-action@v1
+      with:
+        files: "file.yaml, Dockerfile"
+    - name: Files don't exist
+      if: steps.check_file.outputs.files_exists == 'false'
+      run: |
+        echo "failed"
+        exit 1
+    - name: Files exist
+      if: steps.check_file.outputs.files_exists == 'true'
+      run: echo "exists!"
+    
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+   
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with: 
+        python-version: "3.x"
+    - run: pip install PyYAML
+      name: Install py dependencies
+    - run: validation-input-file.py
+      name: Validation of input file
+      
+    - name: Setup QEMU
+      uses: docker/setup-qemu-action@v1
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+      
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        context: .
+        file: ./Dockerfile
+        tags: ${{ secrets.DOCKER_USERNAME }}/${{secrets.DOCKER_FRONTEND_REPO}}:${{ github.sha }}-${{steps.extract_branch.outputs.branch}}, ${{ secrets.DOCKER_USERNAME }}/${{secrets.DOCKER_FRONTEND_REPO}}:latest-${{steps.extract_branch.outputs.branch}}
+
+          
+    - name: Add and commit changes
+      uses: EndBug/add-and-commit@v6
+      with:
+        add: "input.yaml"
+        message: 'updated input.yaml'
+  
+  update-develop-branch:
+    name: Update Develop Branch
+    runs-on: ubuntu-latest
+    needs: setup
+    if: contains(
+          github.event.ref
+          , 'features')
+    steps:
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+    - name: checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - run: |
+          git checkout develop
+          git rebase ${{steps.extract_branch.outputs.branch}}
+          git push origin develop
+      
+  trigger-workflow:
+    name: Trigger workflow
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+      
+      - name: Trigger infrastructure repo workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: update-infrastructure
+          ref: master
+          inputs: '{"docker-image-tag" : "{{ github.sha }}-${{steps.extract_branch.outputs.branch}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "repo-name" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}},"docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
+          repo: mattedamo/thesis-app-infrastructure
+          token: ${{ secrets.TOKEN_GITHUB_DISPATCHER }}

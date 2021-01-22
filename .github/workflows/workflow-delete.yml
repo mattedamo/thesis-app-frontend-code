@@ -1,0 +1,34 @@
+name: delete-branch
+
+on:
+  delete
+
+jobs:
+  
+  trigger-workflow:
+    name: Trigger workflow
+    runs-on: ubuntu-latest
+    if: contains(
+          github.event.ref
+          , 'features') ||
+        contains(
+          github.event.ref
+          , 'master') ||
+        contains(
+          github.event.ref
+          , 'releases')    
+    steps:
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+      
+      - name: Trigger infrastructure repo workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: delete-kustomize-dir
+          ref: master
+          inputs: '{"code-branch" : "${{steps.extract_branch.outputs.branch}}", "tier" : "${{sectets.TIER}}"}'
+          repo: mattedamo/thesis-app-infrastructure
+          token: ${{ secrets.TOKEN_GITHUB_DISPATCHER }}

@@ -110,4 +110,4 @@ jobs:
           ref: master
           inputs: '{"docker-image-tag" : "{{ github.sha }}-${{steps.extract_branch.outputs.branch}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "code-repo" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}},"docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
           repo: mattedamo/thesis-app-infrastructure
-          token: ${{ secrets.TOKEN_GITHUB_DISPATCHER }}
+          token: ${{ secrets.PAT_TOKEN }}

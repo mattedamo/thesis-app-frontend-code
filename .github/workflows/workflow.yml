@@ -161,6 +161,6 @@ jobs:
         with:
           workflow: update-infrastructure
           ref: master
-          inputs: '{"docker-image-tag" : "{{ github.sha }}-${{steps.branch-img-master.outputs.branch-tag}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "code-repo" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}}","docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
+          inputs: '{"docker-image-tag" : "${{ github.sha }}-${{steps.branch-img-master.outputs.branch-tag}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "code-repo" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}}","docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
           repo: mattedamo/thesis-app-infrastructure
           token: ${{ secrets.PAT_TOKEN }}

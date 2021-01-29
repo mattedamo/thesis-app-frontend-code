@@ -109,10 +109,7 @@ jobs:
     needs: setup
     if: contains(
           github.event.ref
-          , 'features') ||
-          contains(
-          github.event.ref
-          , 'master')
+          , 'features')
     steps:
 
     - name: Extract branch name
@@ -124,10 +121,12 @@ jobs:
       with:
         fetch-depth: 0
     - run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
           git checkout develop
           git rebase ${{steps.extract_branch.outputs.branch}}
           git push origin develop
-      
+  
   trigger-workflow:
     name: Trigger workflow
     runs-on: ubuntu-latest
@@ -149,8 +148,8 @@ jobs:
         with:
           workflow: update-infrastructure
           ref: master
-          inputs: '{"docker-image-tag" : "{{ github.sha }}-${{steps.branch-img-not-master.outputs.branch-tag}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "code-repo" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}}","docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
-          repo: mattedamo/thesis-app-infrastructure
+          inputs: '{"docker-image-tag" : "${{ github.sha }}-${{steps.branch-img-not-master.outputs.branch-tag}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "code-repo" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}}","docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
+          repo: ${{ github.repository_owner }}/${{ secrets.INFRASTRUCTURE_REPO }}
           token: ${{ secrets.PAT_TOKEN }}
       
       - name: Trigger infrastructure repo workflow
@@ -161,6 +160,6 @@ jobs:
         with:
           workflow: update-infrastructure
           ref: master
-          inputs: '{"docker-image-tag" : "${{ github.sha }}-${{steps.branch-img-master.outputs.branch-tag}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "code-repo" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}}","docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
-          repo: mattedamo/thesis-app-infrastructure
+          inputs: '{"docker-image-tag" : "{{ github.sha }}-${{steps.branch-img-master.outputs.branch-tag}}", "code-branch" : "${{steps.extract_branch.outputs.branch}}", "code-repo" : "${{ github.event.repository.name }}", "docker-frontend-repo" : "${{secrets.DOCKER_FRONTEND_REPO}}","docker-backend-repo" : "${{secrets.DOCKER_BACKEND_REPO}}", "tier" : "${{secrets.TIER}}"}'
+          repo: ${{ github.repository_owner }}/${{ secrets.INFRASTRUCTURE_REPO }}
           token: ${{ secrets.PAT_TOKEN }}

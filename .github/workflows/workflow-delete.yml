@@ -13,9 +13,6 @@ jobs:
           , 'features') ||
         contains(
           github.event.ref
-          , 'master') ||
-        contains(
-          github.event.ref
           , 'releases')    
     steps:
 
@@ -30,5 +27,5 @@ jobs:
           workflow: delete-kustomize-dir
           ref: master
           inputs: '{"code-branch" : "${{steps.extract_branch.outputs.branch}}", "tier" : "${{sectets.TIER}}"}'
-          repo: mattedamo/thesis-app-infrastructure
+          repo: ${{ github.repository_owner }}/${{secrets.INFRASTRUCTURE_REPO}}
           token: ${{ secrets.PAT_TOKEN }}

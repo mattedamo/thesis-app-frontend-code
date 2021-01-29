@@ -26,6 +26,6 @@ jobs:
         with:
           workflow: delete-kustomize-dir
           ref: master
-          inputs: '{"code-branch" : "${{steps.extract_branch.outputs.branch}}", "tier" : "${{sectets.TIER}}"}'
+          inputs: '{"code-branch" : "${{steps.extract_branch.outputs.branch}}", "tier" : "${{secrets.TIER}}"}'
           repo: ${{ github.repository_owner }}/${{secrets.INFRASTRUCTURE_REPO}}
           token: ${{ secrets.PAT_TOKEN }}

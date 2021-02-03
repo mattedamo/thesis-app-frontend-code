@@ -16,16 +16,31 @@ jobs:
           , 'releases')    
     steps:
 
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
+    - name: Checkout code
+      uses: actions/checkout@v2
       
-      - name: Trigger infrastructure repo workflow
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: delete-kustomize-dir
-          ref: master
-          inputs: '{"code-branch" : "${{steps.extract_branch.outputs.branch}}", "tier" : "${{secrets.TIER}}"}'
-          repo: ${{ github.repository_owner }}/${{secrets.INFRASTRUCTURE_REPO}}
-          token: ${{ secrets.PAT_TOKEN }}
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with: 
+        python-version: "3.x"
+    
+    - run: pip install PyYAML
+      name: Install py dependencies
+    
+    - name: Validation of config file
+      run: python scripts/validation-config-file.py
+
+    - name: Create outputs from config file
+      run: |
+        echo "##[set-output name=infrastructure-repo;]$(python scripts/create-outputs-from-config.py infrastructure-repo)"
+        echo "##[set-output name=tier;]$(python scripts/create-outputs-from-config.py tier)"
+      id: from-config
+      
+    - name: Trigger infrastructure repo workflow
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: delete-kustomize-dir
+        ref: master
+        inputs: '{"code-branch" : "${{ github.event.ref }}", "tier" : "${{steps.from-config.outputs.tier}}"}'
+        repo: ${{ github.repository_owner }}/${{steps.from-config.outputs.infrastructure-repo}}
+        token: ${{ secrets.PAT_TOKEN }}

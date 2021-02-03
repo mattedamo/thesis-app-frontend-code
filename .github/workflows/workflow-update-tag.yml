@@ -8,14 +8,16 @@ jobs:
     name: On pull request merged
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        && contains(github.head_ref, 'releases') || contains(github.head_ref, 'hotfix') 
     steps:  
       - name: checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          
       - name: Extract tag
         shell: bash
-        run: echo "##[set-output name=new-tag;]$(declare -a list=$(git tag); python3 generate-tag.py ${list[*]})"
+        run: echo "##[set-output name=new-tag;]$(declare -a list=$(git tag); python scripts/generate-tag.py ${list[*]})"
         id: extract_tag
 
     

@@ -1,5 +1,4 @@
-
-import yaml, os
+import yaml, os, sys
 
 
 def main():
@@ -11,13 +10,13 @@ def main():
     elif "releases" or "features" in github_ref:
         ns = ref_list[-2]+"/"+ref_list[-1]
     else:
-        raise Exception("Not valid branch name")
+        sys.exit("Not valid branch name")
 
     with open("./input.yaml") as file:
         input = yaml.load(file, Loader=yaml.FullLoader)
     if "ns" in input.keys():
         if ns != input["ns"]:
-            raise Exception("You have to edit input.yaml before expect that it can be applied on kubernetes!")
+            sys.exit("You have to edit input.yaml before expect that it can be applied on kubernetes!")
     else:
         input["ns"] = ns
     with open("./input.yaml", "w") as file:

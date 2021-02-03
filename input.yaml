@@ -22,4 +22,3 @@ image:
     tag: custom-tag
 clusters: 
   - in-cluster
-  - second-cluter
